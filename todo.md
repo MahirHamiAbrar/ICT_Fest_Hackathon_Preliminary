@@ -23,7 +23,7 @@
 
 - [ ] 10. **Booking visibility.** Members may read and cancel only their own bookings (another member's booking id → 404 `BOOKING_NOT_FOUND`). Admins may read and cancel any booking in their org.
 
-- [ ] 11. **Pagination & ordering.** `GET /bookings` takes `page` (default 1) and `limit` (default 10, max 100). Items are the caller's own bookings sorted ascending by start_time (ties by ascending id). Sequential pages never skip or repeat items. Response includes `total`.
+- [r] 11. **Pagination & ordering.** `GET /bookings` takes `page` (default 1) and `limit` (default 10, max 100). Items are the caller's own bookings sorted ascending by start_time (ties by ascending id). Sequential pages never skip or repeat items. Response includes `total`.
 
 - [x] 12. **Usage report.** `GET /admin/usage-report?from=...&to=...` returns, per room in the caller's org (including rooms with zero bookings), the count and summed price_cents of confirmed bookings starting in [from, to] (UTC, inclusive). Must reflect the current state immediately.
 
