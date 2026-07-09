@@ -73,6 +73,25 @@ def test_usage_report_reflects_new_bookings_immediately(client):
     assert row["confirmed_bookings"] == 1, "usage report served a stale cached value after a new booking"
 
 
+def test_usage_report_reflects_cancellations_immediately(client):
+    """A warmed report cache must drop cancelled bookings on the next read."""
+    admin = new_admin(client)
+    room = create_room(client, admin, hourly_rate_cents=1000)
+    booking = make_booking(client, admin, room["id"], future_naive(hours=1), future_naive(hours=2)).json()
+    frm, to = _today_range()
+
+    warm = client.get("/admin/usage-report", params={"from": frm, "to": to}, headers=admin.headers).json()
+    row = next(r for r in warm["rooms"] if r["room_id"] == room["id"])
+    assert row["confirmed_bookings"] == 1
+
+    client.post(f"/bookings/{booking['id']}/cancel", headers=admin.headers)
+
+    fresh = client.get("/admin/usage-report", params={"from": frm, "to": to}, headers=admin.headers).json()
+    row = next(r for r in fresh["rooms"] if r["room_id"] == room["id"])
+    assert row["confirmed_bookings"] == 0, "usage report served a stale cached value after cancellation"
+    assert row["revenue_cents"] == 0
+
+
 def test_usage_report_boundary_dates_are_inclusive(client):
     """A booking starting exactly at 00:00 UTC on `to` must be included."""
     admin = new_admin(client)
@@ -129,6 +148,21 @@ def test_availability_lists_confirmed_bookings_on_that_date_sorted(client):
     assert any(s.startswith(b_later["start_time"][:16]) for s in starts)
 
 
+def test_availability_reflects_new_bookings_immediately(client):
+    """A warmed availability cache must include a booking created after the warm read."""
+    admin = new_admin(client)
+    room = create_room(client, admin)
+    today = datetime.now(timezone.utc).date().isoformat()
+
+    warm = client.get(f"/rooms/{room['id']}/availability", params={"date": today}, headers=admin.headers).json()
+    assert warm["busy"] == []
+
+    make_booking(client, admin, room["id"], future_naive(hours=5), future_naive(hours=6))
+
+    fresh = client.get(f"/rooms/{room['id']}/availability", params={"date": today}, headers=admin.headers).json()
+    assert len(fresh["busy"]) == 1, "availability served a stale cached value after a new booking"
+
+
 def test_availability_excludes_cancelled_bookings(client):
     admin = new_admin(client)
     room = create_room(client, admin)
@@ -180,6 +214,37 @@ def test_stats_decrement_on_cancellation(client):
     stats = client.get(f"/rooms/{room['id']}/stats", headers=admin.headers).json()
     assert stats["total_confirmed_bookings"] == 1
     assert stats["total_revenue_cents"] == 1000
+
+
+def test_usage_report_stays_fresh_after_concurrent_bookings(client):
+    """Rule 12: report must reflect every booking even after a cache warm + burst."""
+    from datetime import time
+
+    admin = new_admin(client)
+    room = create_room(client, admin, hourly_rate_cents=1000)
+    members = [new_member(client, admin.org_name) for _ in range(4)]
+    tomorrow = (datetime.now(timezone.utc) + timedelta(days=1)).date()
+    frm = to = tomorrow.isoformat()
+
+    warm = client.get("/admin/usage-report", params={"from": frm, "to": to}, headers=admin.headers).json()
+    row = next(r for r in warm["rooms"] if r["room_id"] == room["id"])
+    assert row["confirmed_bookings"] == 0
+
+    def attempt(i):
+        start_h = 2 + i * 2
+        start = datetime.combine(tomorrow, time(start_h, 0))
+        end = datetime.combine(tomorrow, time(start_h + 1, 0))
+        return make_booking(client, members[i], room["id"], start.isoformat(), end.isoformat())
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        results = list(pool.map(attempt, range(4)))
+
+    assert all(r.status_code == 201 for r in results), [r.status_code for r in results]
+
+    fresh = client.get("/admin/usage-report", params={"from": frm, "to": to}, headers=admin.headers).json()
+    row = next(r for r in fresh["rooms"] if r["room_id"] == room["id"])
+    assert row["confirmed_bookings"] == 4, f"usage report stale after concurrent bookings: {row}"
+    assert row["revenue_cents"] == 4000
 
 
 def test_stats_stay_consistent_under_concurrent_booking_bursts(client):

@@ -4,6 +4,7 @@ from datetime import datetime, time, timedelta
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
+from .. import cache
 from ..auth import get_current_user, require_admin
 from ..database import get_db
 from ..errors import AppError
@@ -65,6 +66,10 @@ def availability(
 ):
     room = _get_org_room(db, room_id, user.org_id)
 
+    cached = cache.get_availability(room.id, date)
+    if cached is not None:
+        return cached
+
     try:
         day = datetime.strptime(date, "%Y-%m-%d").date()
     except ValueError:
@@ -91,6 +96,7 @@ def availability(
             for b in bookings
         ],
     }
+    cache.set_availability(room.id, date, result)
     return result
 
 
