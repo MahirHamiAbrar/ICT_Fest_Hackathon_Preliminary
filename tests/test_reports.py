@@ -105,16 +105,22 @@ def test_usage_report_invalid_date_is_400(client):
 # ---------------------------------------------------------------------------
 
 def test_availability_lists_confirmed_bookings_on_that_date_sorted(client):
+    from datetime import time
     admin = new_admin(client)
     room = create_room(client, admin)
 
-    # Two bookings starting "today" (UTC) at different times, far enough
-    # apart to avoid overlap.
-    b_later = make_booking(client, admin, room["id"], future_naive(hours=10), future_naive(hours=11)).json()
-    b_earlier = make_booking(client, admin, room["id"], future_naive(hours=2), future_naive(hours=3)).json()
+    # Put both bookings on tomorrow's UTC date to avoid timezone/day-boundary issues
+    tomorrow = datetime.now(timezone.utc).date() + timedelta(days=1)
+    t_start1 = datetime.combine(tomorrow, time(2, 0))
+    t_end1 = datetime.combine(tomorrow, time(3, 0))
+    t_start2 = datetime.combine(tomorrow, time(10, 0))
+    t_end2 = datetime.combine(tomorrow, time(11, 0))
 
-    today = datetime.now(timezone.utc).date().isoformat()
-    body = client.get(f"/rooms/{room['id']}/availability", params={"date": today}, headers=admin.headers).json()
+    b_earlier = make_booking(client, admin, room["id"], t_start1.isoformat(), t_end1.isoformat()).json()
+    b_later = make_booking(client, admin, room["id"], t_start2.isoformat(), t_end2.isoformat()).json()
+
+    date_str = tomorrow.isoformat()
+    body = client.get(f"/rooms/{room['id']}/availability", params={"date": date_str}, headers=admin.headers).json()
     busy = body["busy"]
     assert len(busy) == 2
     assert busy[0]["start_time"] < busy[1]["start_time"], "busy intervals must be sorted ascending"
