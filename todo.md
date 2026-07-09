@@ -2,9 +2,9 @@
 
 - [x] 2. **Booking price.** `price_cents = hourly_rate_cents × duration_hours`. Duration must be a whole number of hours, minimum 1, maximum 8. `end_time` must be strictly after `start_time`. `start_time` must be strictly in the future at request time - no grace window.
 
-- [s] 3. **No double-booking.** Two confirmed bookings for the same room overlap iff `existing.start < new.end AND new.start < existing.end`. Back-to-back bookings are allowed. Conflict → 409 `ROOM_CONFLICT`. Must hold under concurrent requests.
+- [x] 3. **No double-booking.** Two confirmed bookings for the same room overlap iff `existing.start < new.end AND new.start < existing.end`. Back-to-back bookings are allowed. Conflict → 409 `ROOM_CONFLICT`. Must hold under concurrent requests.
 
-- [ ] 4.  **Booking quota.** A member may hold at most 3 confirmed bookings with start time in the window (now, now + 24h], across all rooms in their org. Violation → 409 `QUOTA_EXCEEDED`. Must hold under concurrent requests.
+- [s] 4. **Booking quota.** A member may hold at most 3 confirmed bookings with start time in the window (now, now + 24h], across all rooms in their org. Violation → 409 `QUOTA_EXCEEDED`. Must hold under concurrent requests.
 
 - [x] 5. **Rate limit.** `POST /bookings` is limited to 20 requests per rolling 60 seconds per user (all requests count). Excess → 429 `RATE_LIMITED`. Must hold under concurrent requests.
 

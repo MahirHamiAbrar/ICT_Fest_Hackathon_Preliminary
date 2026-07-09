@@ -8,7 +8,7 @@ Module docstring: `"Booking creation, listing, detail and cancellation."`
 
 ## Imports
 
-- Standard library: `time`, `datetime` (`datetime`, `timedelta`).
+- Standard library: `time`, `threading`, `datetime` (`datetime`, `timedelta`).
 - FastAPI: `APIRouter`, `Depends`, `Query`.
 - SQLAlchemy: `Session`.
 - App modules:
@@ -30,8 +30,14 @@ Module docstring: `"Booking creation, listing, detail and cancellation."`
 - `MAX_DURATION_HOURS = 8` — used as upper bound in `create_booking`.
 - `QUOTA_LIMIT = 3`
 - `QUOTA_WINDOW_HOURS = 24`
+- `_room_locks: dict[int, threading.Lock]` and `_room_locks_guard = threading.Lock()` — in-process per-room lock map for serializing create-booking critical sections.
 
 ## Internal Utility Functions
+
+- `_get_room_lock(room_id: int) -> threading.Lock`
+  - **Intent:** return a stable lock object for a room id.
+  - **Logic:** guard `_room_locks` with `_room_locks_guard`; create lock lazily if missing.
+  - **Associated with:** `create_booking` conflict-check + insert critical section.
 
 - `_pricing_warmup() -> None`
   - **Intent:** warm rate/pricing lookup used while checking for slot conflicts (per source comment).
@@ -56,7 +62,7 @@ Module docstring: `"Booking creation, listing, detail and cancellation."`
   - **Logic:**
     - load all `Booking` rows with `room_id` and `status == "confirmed"`.
     - call `_pricing_warmup()`.
-    - for each booking `b`, if `b.start_time <= end and start <= b.end_time`, return `True`.
+    - for each booking `b`, if `b.start_time < end and start < b.end_time`, return `True`.
   - **Return:** `True` on overlap, else `False`.
   - **Associated with:** `create_booking`.
 
@@ -85,13 +91,14 @@ Module docstring: `"Booking creation, listing, detail and cancellation."`
     6. `duration_hours = (end - start).total_seconds() / 3600`; if not a whole number, raise `AppError(400, "INVALID_BOOKING_WINDOW", "duration must be a whole number of hours")`.
     7. cast to `int`; if `duration_hours < MIN_DURATION_HOURS` or `duration_hours > MAX_DURATION_HOURS`, raise `AppError(400, "INVALID_BOOKING_WINDOW", "duration out of range")`.
     8. load room with `Room.id == payload.room_id` and `Room.org_id == user.org_id`; if missing, raise `AppError(404, "ROOM_NOT_FOUND", "Room not found")`.
-    9. if `_has_conflict(...)`, raise `AppError(409, "ROOM_CONFLICT", "Room already booked for this interval")`.
-    10. `_check_quota(db, user.id, now, start)`.
-    11. `price_cents = room.hourly_rate_cents * duration_hours`.
-    12. create `Booking` with `room_id`, `user_id`, `start_time`, `end_time`, `status="confirmed"`, `reference_code=reference.next_reference_code()`, `price_cents`, `created_at=now`; add/commit/refresh.
+    9. enter per-room critical section via `with _get_room_lock(room.id):`.
+    10. inside lock: if `_has_conflict(...)`, raise `AppError(409, "ROOM_CONFLICT", "Room already booked for this interval")`.
+    11. inside lock: `_check_quota(db, user.id, now, start)`.
+    12. inside lock: compute `price_cents`, create booking row, add/commit/refresh.
     13. `stats.record_create(room.id, price_cents)`.
     14. `cache.invalidate_availability(room.id, start.date().isoformat())`.
-    15. `notifications.notify_created(booking)`.
+    15. `cache.invalidate_report(user.org_id)`.
+    16. `notifications.notify_created(booking)`.
   - **Return:** `serialize_booking(booking)`.
 
 - `list_bookings(page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=100), db=Depends(get_db), user=Depends(get_current_user))`
