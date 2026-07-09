@@ -126,6 +126,7 @@ Module docstring: `"Booking creation, listing, detail and cancellation."`
   - **Logic:**
     - join `Booking` → `Room`; filter `Booking.id == booking_id` and `Room.org_id == user.org_id`.
     - if missing, raise `AppError(404, "BOOKING_NOT_FOUND", "Booking not found")`.
+    - if `user.role != "admin"` and `booking.user_id != user.id`, raise `AppError(404, "BOOKING_NOT_FOUND", "Booking not found")`.
     - `response = serialize_booking(booking)`.
     - append `response["refunds"]` as list of `{amount_cents, status, processed_at}` where `processed_at` is `iso_utc(r.processed_at)` for each `r` in `booking.refunds`.
   - **Return:** booking dict from serializer plus `refunds` array.
