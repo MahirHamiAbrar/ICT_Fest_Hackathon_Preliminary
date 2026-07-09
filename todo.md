@@ -17,7 +17,7 @@
 
 - [ ] 7.  **Reference codes.** Every booking's reference code is unique, including under concurrent creation.
 
-- [r] 8. **Auth.** Tokens are JWTs (HS256) with claims `sub` (user id, string), `org` (org id), `role`, `jti` (unique per token), `iat`, `exp`, `type` (access | refresh). Access tokens expire in exactly 900 seconds. Refresh tokens expire in 7 days. Logout immediately invalidates the presented access token (subsequent use → 401). Refresh tokens are single-use: refreshing returns a new access and refresh token and invalidates the presented refresh token (reuse → 401).
+- [x] 8. **Auth.** Tokens are JWTs (HS256) with claims `sub` (user id, string), `org` (org id), `role`, `jti` (unique per token), `iat`, `exp`, `type` (access | refresh). Access tokens expire in exactly 900 seconds. Refresh tokens expire in 7 days. Logout immediately invalidates the presented access token (subsequent use → 401). Refresh tokens are single-use: refreshing returns a new access and refresh token and invalidates the presented refresh token (reuse → 401).
 
 - [ ] 9.  **Multi-tenancy.** A user (including admins) may only ever read or act on data belonging to their own organization, on every code path. Cross-org resource IDs behave as non-existent (→ 404).
 
@@ -31,6 +31,6 @@
 
 - [ ] 14. **Room stats.** `GET /rooms/{id}/stats` returns the room's current count of confirmed bookings and their summed price_cents, always consistent with the bookings themselves, including after bursts of concurrent activity.
 
-- [ ] 15. **Registration.** `POST /auth/register` with an unknown org name creates the org and the user as admin; with a known org name it joins the caller as member. A duplicate username within the org → 409 `USERNAME_TAKEN`.
+- [x] 15. **Registration.** `POST /auth/register` with an unknown org name creates the org and the user as admin; with a known org name it joins the caller as member. A duplicate username within the org → 409 `USERNAME_TAKEN`.
 
 - [ ] 16. **Liveness.** The service must respond to all endpoints at all times; no combination of concurrent valid requests may hang the service.
