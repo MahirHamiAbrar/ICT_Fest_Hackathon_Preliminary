@@ -8,7 +8,7 @@
 
 - [x] 5. **Rate limit.** `POST /bookings` is limited to 20 requests per rolling 60 seconds per user (all requests count). Excess → 429 `RATE_LIMITED`. Must hold under concurrent requests.
 
-- [ ] 6.  **Cancellation refund policy.** Only the booking's owner or an admin of the same org may cancel. Notice = start_time − cancellation_time:
+- [A] 6.  **Cancellation refund policy.** Only the booking's owner or an admin of the same org may cancel. Notice = start_time − cancellation_time:
   - notice ≥ 48 hours → 100% refund
   - 24 hours ≤ notice < 48 hours → 50% refund
   - notice < 24 hours → 0% refund
