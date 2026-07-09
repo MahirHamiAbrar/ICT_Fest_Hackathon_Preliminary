@@ -19,11 +19,7 @@
 
 - [x] 8. **Auth.** Tokens are JWTs (HS256) with claims `sub` (user id, string), `org` (org id), `role`, `jti` (unique per token), `iat`, `exp`, `type` (access | refresh). Access tokens expire in exactly 900 seconds. Refresh tokens expire in 7 days. Logout immediately invalidates the presented access token (subsequent use → 401). Refresh tokens are single-use: refreshing returns a new access and refresh token and invalidates the presented refresh token (reuse → 401).
 
-<<<<<<< HEAD
-- [x] 9.  **Multi-tenancy.** A user (including admins) may only ever read or act on data belonging to their own organization, on every code path. Cross-org resource IDs behave as non-existent (→ 404).
-=======
-- [r] 9. **Multi-tenancy.** A user (including admins) may only ever read or act on data belonging to their own organization, on every code path. Cross-org resource IDs behave as non-existent (→ 404).
->>>>>>> 73f1347b237323ff60c522d9637e874a3ff60d72
+- [x] 9. **Multi-tenancy.** A user (including admins) may only ever read or act on data belonging to their own organization, on every code path. Cross-org resource IDs behave as non-existent (→ 404).
 
 - [x] 10. **Booking visibility.** Members may read and cancel only their own bookings (another member's booking id → 404 `BOOKING_NOT_FOUND`). Admins may read and cancel any booking in their org.
 
@@ -31,9 +27,9 @@
 
 - [x] 12. **Usage report.** `GET /admin/usage-report?from=...&to=...` returns, per room in the caller's org (including rooms with zero bookings), the count and summed price_cents of confirmed bookings starting in [from, to] (UTC, inclusive). Must reflect the current state immediately.
 
-- [ ] 13. **Availability.** `GET /rooms/{id}/availability?date=...` returns the room's confirmed bookings starting on that UTC date as busy intervals, sorted ascending, reflecting the current state immediately.
+- [x] 13. **Availability.** `GET /rooms/{id}/availability?date=...` returns the room's confirmed bookings starting on that UTC date as busy intervals, sorted ascending, reflecting the current state immediately.
 
-- [ ] 14. **Room stats.** `GET /rooms/{id}/stats` returns the room's current count of confirmed bookings and their summed price_cents, always consistent with the bookings themselves, including after bursts of concurrent activity.
+- [x] 14. **Room stats.** `GET /rooms/{id}/stats` returns the room's current count of confirmed bookings and their summed price_cents, always consistent with the bookings themselves, including after bursts of concurrent activity.
 
 - [x] 15. **Registration.** `POST /auth/register` with an unknown org name creates the org and the user as admin; with a known org name it joins the caller as member. A duplicate username within the org → 409 `USERNAME_TAKEN`.
 
