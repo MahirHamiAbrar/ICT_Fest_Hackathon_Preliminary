@@ -1,4 +1,5 @@
 """Helpers for parsing input datetimes and rendering UTC responses."""
+
 from datetime import datetime, timezone
 
 
@@ -8,9 +9,11 @@ def parse_input_datetime(value: str) -> datetime:
     Inputs that carry a UTC offset are normalized to UTC; naive inputs are
     treated as UTC as-is.
     """
+    if value.endswith("Z"):
+        value = f"{value[:-1]}+00:00"
     dt = datetime.fromisoformat(value)
     if dt.tzinfo is not None:
-        dt = dt.replace(tzinfo=None)
+        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
     return dt
 
 

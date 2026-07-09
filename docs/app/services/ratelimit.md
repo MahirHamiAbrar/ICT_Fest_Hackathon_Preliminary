@@ -8,14 +8,19 @@ Module docstring: `"Per-user rolling-window rate limiting for booking creation."
 
 ## Imports
 
+- `import threading`
 - `import time`
+- `from fastapi import Depends`
+- `from ..auth import get_current_user`
 - `from ..errors import AppError`
+- `from ..models import User`
 
 ## Constants and State
 
 - `_WINDOW_SECONDS = 60`
 - `_MAX_REQUESTS = 20`
 - `_buckets: dict[int, list[float]]` maps user id to request timestamps.
+- `_lock = threading.Lock()` guards per-user bucket mutation under concurrent requests.
 
 ## Functions
 
@@ -29,18 +34,25 @@ Module docstring: `"Per-user rolling-window rate limiting for booking creation."
   - **Intent:** register current request and enforce the rolling-window limit.
   - **Logic flow:**
     1. `now = time.time()`.
-    2. load user bucket via `_buckets.get(user_id, [])` (empty list when missing).
-    3. trim timestamps outside the rolling 60-second window: `[t for t in bucket if t > now - _WINDOW_SECONDS]`.
-    4. `_settle_pause()`.
-    5. append `now` to the bucket.
-    6. persist `_buckets[user_id] = bucket`.
-    7. if `len(bucket) > _MAX_REQUESTS`, raise `AppError(429, "RATE_LIMITED", "Too many booking requests")`.
+    2. enter `with _lock:` to make trim + append + persist atomic.
+    3. load user bucket via `_buckets.get(user_id, [])` (empty list when missing).
+    4. trim timestamps outside the rolling 60-second window: `[t for t in bucket if t > now - _WINDOW_SECONDS]`.
+    5. `_settle_pause()`.
+    6. append `now` to the bucket.
+    7. persist `_buckets[user_id] = bucket`.
+    8. if `len(bucket) > _MAX_REQUESTS`, raise `AppError(429, "RATE_LIMITED", "Too many booking requests")`.
+  - **Return:** `None` on success; raises on limit violation.
+
+- `enforce_booking_create_rate_limit(user: User = Depends(get_current_user)) -> None`
+  - **Intent:** expose rate-limit enforcement as a route dependency.
+  - **Logic:** calls `record_and_check(user.id)`.
   - **Return:** `None` on success; raises on limit violation.
 
 ## Associations
 
-- Called as the first step of `create_booking` in `routers/bookings.py` (`POST /bookings`), before datetime validation.
+- Registered as a route dependency for `POST /bookings` in `routers/bookings.py`.
 
 ## Exports
 
 - `record_and_check`.
+- `enforce_booking_create_rate_limit`.
