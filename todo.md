@@ -6,7 +6,7 @@
 
 - [ ] 4.  **Booking quota.** A member may hold at most 3 confirmed bookings with start time in the window (now, now + 24h], across all rooms in their org. Violation → 409 `QUOTA_EXCEEDED`. Must hold under concurrent requests.
 
-- [s] 5. **Rate limit.** `POST /bookings` is limited to 20 requests per rolling 60 seconds per user (all requests count). Excess → 429 `RATE_LIMITED`. Must hold under concurrent requests.
+- [x] 5. **Rate limit.** `POST /bookings` is limited to 20 requests per rolling 60 seconds per user (all requests count). Excess → 429 `RATE_LIMITED`. Must hold under concurrent requests.
 
 - [ ] 6.  **Cancellation refund policy.** Only the booking's owner or an admin of the same org may cancel. Notice = start_time − cancellation_time:
   - notice ≥ 48 hours → 100% refund

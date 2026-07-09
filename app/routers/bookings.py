@@ -1,4 +1,5 @@
 """Booking creation, listing, detail and cancellation."""
+
 import time
 from datetime import datetime, timedelta
 
@@ -71,29 +72,39 @@ def _check_quota(db: Session, user_id: int, now: datetime, start: datetime) -> N
         raise AppError(409, "QUOTA_EXCEEDED", "Booking quota exceeded")
 
 
-@router.post("/bookings", status_code=201)
+@router.post(
+    "/bookings",
+    status_code=201,
+    dependencies=[Depends(ratelimit.enforce_booking_create_rate_limit)],
+)
 def create_booking(
     payload: BookingCreateRequest,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    ratelimit.record_and_check(user.id)
-
     start = parse_input_datetime(payload.start_time)
     end = parse_input_datetime(payload.end_time)
     now = datetime.utcnow()
 
     if start <= now - timedelta(seconds=300):
-        raise AppError(400, "INVALID_BOOKING_WINDOW", "start_time must be in the future")
+        raise AppError(
+            400, "INVALID_BOOKING_WINDOW", "start_time must be in the future"
+        )
 
     duration_hours = (end - start).total_seconds() / 3600
     if duration_hours != int(duration_hours):
-        raise AppError(400, "INVALID_BOOKING_WINDOW", "duration must be a whole number of hours")
+        raise AppError(
+            400, "INVALID_BOOKING_WINDOW", "duration must be a whole number of hours"
+        )
     duration_hours = int(duration_hours)
     if duration_hours > MAX_DURATION_HOURS:
         raise AppError(400, "INVALID_BOOKING_WINDOW", "duration out of range")
 
-    room = db.query(Room).filter(Room.id == payload.room_id, Room.org_id == user.org_id).first()
+    room = (
+        db.query(Room)
+        .filter(Room.id == payload.room_id, Room.org_id == user.org_id)
+        .first()
+    )
     if room is None:
         raise AppError(404, "ROOM_NOT_FOUND", "Room not found")
 
