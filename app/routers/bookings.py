@@ -27,6 +27,8 @@ QUOTA_WINDOW_HOURS = 24
 
 _room_locks: dict[int, threading.Lock] = {}
 _room_locks_guard = threading.Lock()
+_user_locks: dict[int, threading.Lock] = {}
+_user_locks_guard = threading.Lock()
 
 
 def _get_room_lock(room_id: int) -> threading.Lock:
@@ -35,6 +37,15 @@ def _get_room_lock(room_id: int) -> threading.Lock:
         if lock is None:
             lock = threading.Lock()
             _room_locks[room_id] = lock
+        return lock
+
+
+def _get_user_lock(user_id: int) -> threading.Lock:
+    with _user_locks_guard:
+        lock = _user_locks.get(user_id)
+        if lock is None:
+            lock = threading.Lock()
+            _user_locks[user_id] = lock
         return lock
 
 
@@ -128,28 +139,29 @@ def create_booking(
     if room is None:
         raise AppError(404, "ROOM_NOT_FOUND", "Room not found")
 
-    with _get_room_lock(room.id):
-        if _has_conflict(db, room.id, start, end):
-            raise AppError(
-                409, "ROOM_CONFLICT", "Room already booked for this interval"
+    with _get_user_lock(user.id):
+        with _get_room_lock(room.id):
+            if _has_conflict(db, room.id, start, end):
+                raise AppError(
+                    409, "ROOM_CONFLICT", "Room already booked for this interval"
+                )
+
+            _check_quota(db, user.id, now, start)
+
+            price_cents = room.hourly_rate_cents * duration_hours
+            booking = Booking(
+                room_id=room.id,
+                user_id=user.id,
+                start_time=start,
+                end_time=end,
+                status="confirmed",
+                reference_code=reference.next_reference_code(),
+                price_cents=price_cents,
+                created_at=now,
             )
-
-        _check_quota(db, user.id, now, start)
-
-        price_cents = room.hourly_rate_cents * duration_hours
-        booking = Booking(
-            room_id=room.id,
-            user_id=user.id,
-            start_time=start,
-            end_time=end,
-            status="confirmed",
-            reference_code=reference.next_reference_code(),
-            price_cents=price_cents,
-            created_at=now,
-        )
-        db.add(booking)
-        db.commit()
-        db.refresh(booking)
+            db.add(booking)
+            db.commit()
+            db.refresh(booking)
 
     stats.record_create(room.id, price_cents)
     cache.invalidate_availability(room.id, start.date().isoformat())
