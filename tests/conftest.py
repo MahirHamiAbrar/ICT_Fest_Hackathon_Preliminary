@@ -16,11 +16,27 @@ from datetime import datetime, timedelta, timezone
 import jwt
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import text
 
 from app.config import JWT_ALGORITHM, JWT_SECRET
+from app.database import engine
 from app.main import app
 
 DEFAULT_PASSWORD = "password123"
+
+# The test suite deliberately hammers the API with many concurrent threads
+# (to exercise the "holds under concurrent requests" business rules). The
+# app's SQLite connection uses the default rollback-journal mode, which can
+# surface spurious "attempt to write a readonly database" errors under very
+# high write concurrency from a single process. Switching to WAL (with a
+# generous busy timeout) is a connection-level setting, not an application
+# code change, and makes the *test harness* itself reliable so that failures
+# reported below reflect real business-rule bugs rather than SQLite
+# contention artifacts.
+with engine.connect() as _conn:
+    _conn.execute(text("PRAGMA journal_mode=WAL"))
+    _conn.execute(text("PRAGMA busy_timeout=30000"))
+    _conn.commit()
 
 
 @pytest.fixture(scope="session")
