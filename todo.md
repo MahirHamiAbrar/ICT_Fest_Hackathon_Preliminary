@@ -15,7 +15,7 @@
 
   Refund amount rounds to the nearest cent, half-cents rounding up. Cancelling an already-cancelled booking → 409 `ALREADY_CANCELLED`. A cancelled booking has exactly one RefundLog entry, and the amount returned by the cancel response must equal the amount stored in the RefundLog. Must hold under concurrent cancel requests for the same booking.
 
-- [ ] 7.  **Reference codes.** Every booking's reference code is unique, including under concurrent creation.
+- [s] 7. **Reference codes.** Every booking's reference code is unique, including under concurrent creation.
 
 - [x] 8. **Auth.** Tokens are JWTs (HS256) with claims `sub` (user id, string), `org` (org id), `role`, `jti` (unique per token), `iat`, `exp`, `type` (access | refresh). Access tokens expire in exactly 900 seconds. Refresh tokens expire in 7 days. Logout immediately invalidates the presented access token (subsequent use → 401). Refresh tokens are single-use: refreshing returns a new access and refresh token and invalidates the presented refresh token (reuse → 401).
 
