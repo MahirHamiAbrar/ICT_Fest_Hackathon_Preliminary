@@ -1,4 +1,3 @@
-```markdown
 **AAI presents IUT 12th ICT Fest**
 powered by Therap (BD) Ltd.
 organized by IUT Computer Society
@@ -263,4 +262,3 @@ Ties are resolved in the following order:
 Manual evaluation of `bug_report.md` is the final tie-breaking mechanism.
 
 **Good luck.**
-```
