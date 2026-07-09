@@ -1,6 +1,6 @@
-- [s] 1. **Datetimes.** All API datetimes are ISO 8601. Input datetimes carrying a UTC offset must be converted to UTC before storage or comparison; naive input is treated as UTC. All response datetimes are UTC with an explicit UTC designator.
+- [x] 1. **Datetimes.** All API datetimes are ISO 8601. Input datetimes carrying a UTC offset must be converted to UTC before storage or comparison; naive input is treated as UTC. All response datetimes are UTC with an explicit UTC designator.
 
-- [ ] 2.  **Booking price.** `price_cents = hourly_rate_cents × duration_hours`. Duration must be a whole number of hours, minimum 1, maximum 8. `end_time` must be strictly after `start_time`. `start_time` must be strictly in the future at request time - no grace window.
+- [s] 2. **Booking price.** `price_cents = hourly_rate_cents × duration_hours`. Duration must be a whole number of hours, minimum 1, maximum 8. `end_time` must be strictly after `start_time`. `start_time` must be strictly in the future at request time - no grace window.
 
 - [ ] 3.  **No double-booking.** Two confirmed bookings for the same room overlap iff `existing.start < new.end AND new.start < existing.end`. Back-to-back bookings are allowed. Conflict → 409 `ROOM_CONFLICT`. Must hold under concurrent requests.
 

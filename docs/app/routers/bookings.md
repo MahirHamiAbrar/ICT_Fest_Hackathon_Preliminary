@@ -75,9 +75,9 @@ Module docstring: `"Booking creation, listing, detail and cancellation."`
 
 - `create_booking(payload: BookingCreateRequest, db=Depends(get_db), user=Depends(get_current_user))`
   - **Route:** `POST /bookings` (status 201).
-  - **Dependencies:** `get_db`, `get_current_user`.
+  - **Dependencies:** `ratelimit.enforce_booking_create_rate_limit`, `get_db`, `get_current_user`.
   - **Logic flow:**
-    1. `ratelimit.record_and_check(user.id)` (may raise `429 RATE_LIMITED`).
+    1. route dependency `ratelimit.enforce_booking_create_rate_limit` runs before handler and may raise `429 RATE_LIMITED`.
     2. `start = parse_input_datetime(payload.start_time)`, `end = parse_input_datetime(payload.end_time)`.
     3. `now = datetime.utcnow()`.
     4. if `start <= now - timedelta(seconds=300)`, raise `AppError(400, "INVALID_BOOKING_WINDOW", "start_time must be in the future")`.
@@ -112,9 +112,8 @@ Module docstring: `"Booking creation, listing, detail and cancellation."`
     - join `Booking` → `Room`; filter `Booking.id == booking_id` and `Room.org_id == user.org_id`.
     - if missing, raise `AppError(404, "BOOKING_NOT_FOUND", "Booking not found")`.
     - `response = serialize_booking(booking)`.
-    - overwrite `response["start_time"] = iso_utc(booking.created_at)` (response `start_time` is `created_at`, not booking start).
     - append `response["refunds"]` as list of `{amount_cents, status, processed_at}` where `processed_at` is `iso_utc(r.processed_at)` for each `r` in `booking.refunds`.
-  - **Return:** booking dict with mutated `start_time` and `refunds` array.
+  - **Return:** booking dict from serializer plus `refunds` array.
 
 - `cancel_booking(booking_id: int, db=Depends(get_db), user=Depends(get_current_user))`
   - **Route:** `POST /bookings/{booking_id}/cancel` (default 200).
@@ -139,7 +138,7 @@ Module docstring: `"Booking creation, listing, detail and cancellation."`
 
 ## Associations
 
-- Rate limiting: `services/ratelimit.py` (`record_and_check`).
+- Rate limiting: `services/ratelimit.py` (`enforce_booking_create_rate_limit` dependency; internally calls `record_and_check`).
 - Reference codes: `services/reference.py` (`next_reference_code`).
 - Stats: `services/stats.py` (`record_create`, `record_cancel`).
 - Cache: `cache.invalidate_availability` on create; `cache.invalidate_report` on cancel.

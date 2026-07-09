@@ -15,7 +15,7 @@ Module docstring: `"Helpers for parsing input datetimes and rendering UTC respon
 - `parse_input_datetime(value: str) -> datetime`
   - **Docstring (source):** parse ISO 8601 into a naive UTC datetime for storage; claims offset inputs are “normalized to UTC” and naive inputs are treated as UTC as-is.
   - **Intent:** parse ISO datetime input for storage/comparison.
-  - **Actual logic:** `datetime.fromisoformat(value)`; if `tzinfo is not None`, drops tzinfo with `replace(tzinfo=None)` (no offset-to-UTC conversion).
+  - **Actual logic:** if input ends with `"Z"`, rewrites to `"+00:00"` for compatibility; parses with `datetime.fromisoformat(value)`; if `tzinfo is not None`, converts to UTC via `astimezone(timezone.utc)` and then strips tzinfo for naive-UTC storage.
   - **Return:** Python `datetime` (naive).
   - **Associated with:** `create_booking` in `routers/bookings.py` (`POST /bookings`) for `start_time` and `end_time`.
 
@@ -27,7 +27,7 @@ Module docstring: `"Helpers for parsing input datetimes and rendering UTC respon
   - **Associated with:**
     - `serializers.serialize_booking` (`start_time`, `end_time`, `created_at`).
     - `routers/rooms.py` availability `busy` slots.
-    - `routers/bookings.py` `get_booking` (`start_time` overwrite and refund `processed_at`).
+    - `routers/bookings.py` `get_booking` (`refund processed_at`).
     - `services/export.py` CSV `start_time` / `end_time` columns.
 
 ## Exports
