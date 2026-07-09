@@ -25,7 +25,7 @@
 
 - [ ] 11. **Pagination & ordering.** `GET /bookings` takes `page` (default 1) and `limit` (default 10, max 100). Items are the caller's own bookings sorted ascending by start_time (ties by ascending id). Sequential pages never skip or repeat items. Response includes `total`.
 
-- [ r ] 12. **Usage report.** `GET /admin/usage-report?from=...&to=...` returns, per room in the caller's org (including rooms with zero bookings), the count and summed price_cents of confirmed bookings starting in [from, to] (UTC, inclusive). Must reflect the current state immediately.
+- [x] 12. **Usage report.** `GET /admin/usage-report?from=...&to=...` returns, per room in the caller's org (including rooms with zero bookings), the count and summed price_cents of confirmed bookings starting in [from, to] (UTC, inclusive). Must reflect the current state immediately.
 
 - [ ] 13. **Availability.** `GET /rooms/{id}/availability?date=...` returns the room's confirmed bookings starting on that UTC date as busy intervals, sorted ascending, reflecting the current state immediately.
 

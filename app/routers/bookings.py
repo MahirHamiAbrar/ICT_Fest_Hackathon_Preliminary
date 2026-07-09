@@ -48,7 +48,7 @@ def _has_conflict(db: Session, room_id: int, start: datetime, end: datetime) -> 
     )
     _pricing_warmup()
     for b in existing:
-        if b.start_time <= end and start <= b.end_time:
+        if b.start_time < end and start < b.end_time:
             return True
     return False
 
@@ -130,6 +130,7 @@ def create_booking(
 
     stats.record_create(room.id, price_cents)
     cache.invalidate_availability(room.id, start.date().isoformat())
+    cache.invalidate_report(user.org_id)
     notifications.notify_created(booking)
 
     return serialize_booking(booking)
@@ -225,6 +226,7 @@ def cancel_booking(
 
     stats.record_cancel(booking.room_id, booking.price_cents)
     cache.invalidate_report(user.org_id)
+    cache.invalidate_availability(booking.room_id, booking.start_time.date().isoformat())
     notifications.notify_cancelled(booking)
 
     return {
