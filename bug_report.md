@@ -1152,22 +1152,22 @@ def notify_cancelled(booking) -> None:
 
 ## Summary
 
-| Bug   | Rule                        | Contributor     | Source file                                           |
-| ----- | --------------------------- | --------------- | ----------------------------------------------------- |
-| 1     | Datetimes                   | Shirshen        | `bugs/shirshenfix/1.md`                               |
-| 2     | Booking price               | Shirshen        | `bugs/shirshenfix/2.md`                               |
-| 9     | Booking price (test shim)   | Shirshen        | `bugs/shirshenfix/9.md`                               |
-| 3     | No double-booking           | Shirshen, Rifat | `bugs/shirshenfix/3.md`                               |
-| 4     | Booking quota               | Shirshen        | `bugs/shirshenfix/4.md`                               |
-| 5     | Rate limit                  | Shirshen        | `bugs/shirshenfix/5.md`                               |
-| 6     | Cancellation refund         | Mahir           | `bugs/mahirfix/6.md`                                  |
-| 7     | Reference codes             | Shirshen, Mahir | `bugs/shirshenfix/7.md`, `bugs/mahirfix/7.md`         |
-| 8     | Reference codes (DB resume) | Shirshen        | `bugs/shirshenfix/8.md`                               |
-| 10–12 | Auth                        | Rifat           | `bugs/rifatfix/8+15_auth_fixes.md`                    |
-| 13    | Multi-tenancy               | Rifat           | `bugs/rifatfix/9_multitendency.md`                    |
-| 14    | Booking visibility          | Shirshen        | `bugs/shirshenfix/10.md`                              |
-| 15–17 | Pagination                  | Rifat           | `bugs/rifatfix/11_pagination_fixes.md`                |
-| 18–20 | Reports & availability      | Rifat, Mahir    | `bugs/rifatfix/12_*.md`, `bugs/mahirfix/8.md`         |
-| 21    | Room stats                  | Rifat           | `bugs/rifatfix/12_reporting_and_concurrency_fixes.md` |
-| 22    | Registration                | Rifat           | `bugs/rifatfix/8+15_auth_fixes.md`                    |
-| 23    | Liveness                    | Rifat           | `bugs/rifatfix/16_liveness.md`                        |
+| Bug   | Rule                        | Source file                                           |
+| ----- | --------------------------- | ----------------------------------------------------- |
+| 1     | Datetimes                   | `bugs/shirshenfix/1.md`                               |
+| 2     | Booking price               | `bugs/shirshenfix/2.md`                               |
+| 9     | Booking price (test shim)   | `bugs/shirshenfix/9.md`                               |
+| 3     | No double-booking           | `bugs/rifatfix/3.md`                                  |
+| 4     | Booking quota               | `bugs/shirshenfix/4.md`                               |
+| 5     | Rate limit                  | `bugs/shirshenfix/5.md`                               |
+| 6     | Cancellation refund         | `bugs/mahirfix/6.md`                                  |
+| 7     | Reference codes             | `bugs/shirshenfix/7.md`, `bugs/mahirfix/7.md`         |
+| 8     | Reference codes (DB resume) | `bugs/shirshenfix/8.md`                               |
+| 10–12 | Auth                        | `bugs/rifatfix/8+15_auth_fixes.md`                    |
+| 13    | Multi-tenancy               | `bugs/rifatfix/9_multitendency.md`                    |
+| 14    | Booking visibility          | `bugs/shirshenfix/10.md`                              |
+| 15–17 | Pagination                  | `bugs/rifatfix/11_pagination_fixes.md`                |
+| 18–20 | Reports & availability      | `bugss/rifatfix/12_*.md`, `bugs/mahirfix/8.md`        |
+| 21    | Room stats                  | `bugs/rifatfix/12_reporting_and_concurrency_fixes.md` |
+| 22    | Registration                | `bugs/rifatfix/8+15_auth_fixes.md`                    |
+| 23    | Liveness                    | `bugs/rifatfix/16_liveness.md`                        |
