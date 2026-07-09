@@ -15,11 +15,15 @@
 
   Refund amount rounds to the nearest cent, half-cents rounding up. Cancelling an already-cancelled booking → 409 `ALREADY_CANCELLED`. A cancelled booking has exactly one RefundLog entry, and the amount returned by the cancel response must equal the amount stored in the RefundLog. Must hold under concurrent cancel requests for the same booking.
 
-- [s] 7. **Reference codes.** Every booking's reference code is unique, including under concurrent creation.
+- [x] 7. **Reference codes.** Every booking's reference code is unique, including under concurrent creation.
 
 - [x] 8. **Auth.** Tokens are JWTs (HS256) with claims `sub` (user id, string), `org` (org id), `role`, `jti` (unique per token), `iat`, `exp`, `type` (access | refresh). Access tokens expire in exactly 900 seconds. Refresh tokens expire in 7 days. Logout immediately invalidates the presented access token (subsequent use → 401). Refresh tokens are single-use: refreshing returns a new access and refresh token and invalidates the presented refresh token (reuse → 401).
 
+<<<<<<< HEAD
 - [x] 9.  **Multi-tenancy.** A user (including admins) may only ever read or act on data belonging to their own organization, on every code path. Cross-org resource IDs behave as non-existent (→ 404).
+=======
+- [r] 9. **Multi-tenancy.** A user (including admins) may only ever read or act on data belonging to their own organization, on every code path. Cross-org resource IDs behave as non-existent (→ 404).
+>>>>>>> 73f1347b237323ff60c522d9637e874a3ff60d72
 
 - [x] 10. **Booking visibility.** Members may read and cancel only their own bookings (another member's booking id → 404 `BOOKING_NOT_FOUND`). Admins may read and cancel any booking in their org.
 

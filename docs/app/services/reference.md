@@ -9,10 +9,12 @@ Module docstring: codes are issued from a monotonic counter and formatted into a
 ## Imports
 
 - `import time`
+- `import threading`
 
 ## Module State
 
 - `_counter = {"value": 1000}` starting sequence value.
+- `_counter_lock = threading.Lock()` serializes counter increments.
 
 ## Functions
 
@@ -24,10 +26,11 @@ Module docstring: codes are issued from a monotonic counter and formatted into a
 - `next_reference_code() -> str`
   - **Intent:** issue next booking reference string.
   - **Logic:**
-    1. `current = _counter["value"]`.
-    2. `_format_pause()`.
-    3. `_counter["value"] = current + 1` (post-increment storage).
-    4. return `f"CW-{current:06d}"`.
+    1. enter `with _counter_lock:`.
+    2. `current = _counter["value"]`.
+    3. `_format_pause()`.
+    4. `_counter["value"] = current + 1` (post-increment storage).
+    5. return `f"CW-{current:06d}"`.
   - **Example return:** `CW-001000` (first call with starting value 1000).
   - **Associated with:** `create_booking` in `routers/bookings.py` when setting `Booking.reference_code` (before first commit); imported via `from ..services import reference`.
 
