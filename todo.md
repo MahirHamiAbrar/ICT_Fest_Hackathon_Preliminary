@@ -1,14 +1,14 @@
-- [s] 1. **Datetimes.** All API datetimes are ISO 8601. Input datetimes carrying a UTC offset must be converted to UTC before storage or comparison; naive input is treated as UTC. All response datetimes are UTC with an explicit UTC designator.
+- [x] 1. **Datetimes.** All API datetimes are ISO 8601. Input datetimes carrying a UTC offset must be converted to UTC before storage or comparison; naive input is treated as UTC. All response datetimes are UTC with an explicit UTC designator.
 
-- [ ] 2.  **Booking price.** `price_cents = hourly_rate_cents × duration_hours`. Duration must be a whole number of hours, minimum 1, maximum 8. `end_time` must be strictly after `start_time`. `start_time` must be strictly in the future at request time - no grace window.
+- [x] 2. **Booking price.** `price_cents = hourly_rate_cents × duration_hours`. Duration must be a whole number of hours, minimum 1, maximum 8. `end_time` must be strictly after `start_time`. `start_time` must be strictly in the future at request time - no grace window.
 
-- [ ] 3.  **No double-booking.** Two confirmed bookings for the same room overlap iff `existing.start < new.end AND new.start < existing.end`. Back-to-back bookings are allowed. Conflict → 409 `ROOM_CONFLICT`. Must hold under concurrent requests.
+- [x] 3. **No double-booking.** Two confirmed bookings for the same room overlap iff `existing.start < new.end AND new.start < existing.end`. Back-to-back bookings are allowed. Conflict → 409 `ROOM_CONFLICT`. Must hold under concurrent requests.
 
-- [ ] 4.  **Booking quota.** A member may hold at most 3 confirmed bookings with start time in the window (now, now + 24h], across all rooms in their org. Violation → 409 `QUOTA_EXCEEDED`. Must hold under concurrent requests.
+- [x] 4. **Booking quota.** A member may hold at most 3 confirmed bookings with start time in the window (now, now + 24h], across all rooms in their org. Violation → 409 `QUOTA_EXCEEDED`. Must hold under concurrent requests.
 
 - [x] 5. **Rate limit.** `POST /bookings` is limited to 20 requests per rolling 60 seconds per user (all requests count). Excess → 429 `RATE_LIMITED`. Must hold under concurrent requests.
 
-- [ ] 6.  **Cancellation refund policy.** Only the booking's owner or an admin of the same org may cancel. Notice = start_time − cancellation_time:
+- [A] 6. **Cancellation refund policy.** Only the booking's owner or an admin of the same org may cancel. Notice = start_time − cancellation_time:
   - notice ≥ 48 hours → 100% refund
   - 24 hours ≤ notice < 48 hours → 50% refund
   - notice < 24 hours → 0% refund
@@ -21,7 +21,7 @@
 
 - [ ] 9.  **Multi-tenancy.** A user (including admins) may only ever read or act on data belonging to their own organization, on every code path. Cross-org resource IDs behave as non-existent (→ 404).
 
-- [ ] 10. **Booking visibility.** Members may read and cancel only their own bookings (another member's booking id → 404 `BOOKING_NOT_FOUND`). Admins may read and cancel any booking in their org.
+- [s] 10. **Booking visibility.** Members may read and cancel only their own bookings (another member's booking id → 404 `BOOKING_NOT_FOUND`). Admins may read and cancel any booking in their org.
 
 - [r] 11. **Pagination & ordering.** `GET /bookings` takes `page` (default 1) and `limit` (default 10, max 100). Items are the caller's own bookings sorted ascending by start_time (ties by ascending id). Sequential pages never skip or repeat items. Response includes `total`.
 
