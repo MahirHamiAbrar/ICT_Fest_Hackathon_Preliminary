@@ -932,7 +932,7 @@ cache.invalidate_availability_for_room(booking.room_id)
 
 ### Symptom
 
-Rules 12 and 13 require usage reports and room availability to reflect the current state immediately, including after bursts of concurrent activity. The in-memory cache was vulnerable to a time-of-check/time-of-use race: a slow report or availability computation could finish *after* a booking mutation had already invalidated the cache and write stale data back in, so every subsequent read served outdated counts or busy intervals until the next invalidation.
+Rules 12 and 13 require usage reports and room availability to reflect the current state immediately, including after bursts of concurrent activity. The in-memory cache was vulnerable to a time-of-check/time-of-use race: a slow report or availability computation could finish _after_ a booking mutation had already invalidated the cache and write stale data back in, so every subsequent read served outdated counts or busy intervals until the next invalidation.
 
 ### files and explanations
 
@@ -1152,22 +1152,22 @@ def notify_cancelled(booking) -> None:
 
 ## Summary
 
-| Bug | Rule | Contributor | Source file |
-|-----|------|-------------|-------------|
-| 1 | Datetimes | Shirshen | `bugs/shirshenfix/1.md` |
-| 2 | Booking price | Shirshen | `bugs/shirshenfix/2.md` |
-| 9 | Booking price (test shim) | Shirshen | `bugs/shirshenfix/9.md` |
-| 3 | No double-booking | Shirshen, Rifat | `bugs/shirshenfix/3.md` |
-| 4 | Booking quota | Shirshen | `bugs/shirshenfix/4.md` |
-| 5 | Rate limit | Shirshen | `bugs/shirshenfix/5.md` |
-| 6 | Cancellation refund | Mahir | `bugs/mahirfix/6.md` |
-| 7 | Reference codes | Shirshen, Mahir | `bugs/shirshenfix/7.md`, `bugs/mahirfix/7.md` |
-| 8 | Reference codes (DB resume) | Shirshen | `bugs/shirshenfix/8.md` |
-| 10–12 | Auth | Rifat | `bugs/rifatfix/8+15_auth_fixes.md` |
-| 13 | Multi-tenancy | Rifat | `bugs/rifatfix/9_multitendency.md` |
-| 14 | Booking visibility | Shirshen | `bugs/shirshenfix/10.md` |
-| 15–17 | Pagination | Rifat | `bugs/rifatfix/11_pagination_fixes.md` |
-| 18–20 | Reports & availability | Rifat, Mahir | `bugs/rifatfix/12_*.md`, `bugs/mahirfix/8.md` |
-| 21 | Room stats | Rifat | `bugs/rifatfix/12_reporting_and_concurrency_fixes.md` |
-| 22 | Registration | Rifat | `bugs/rifatfix/8+15_auth_fixes.md` |
-| 23 | Liveness | Rifat | `bugs/rifatfix/16_liveness.md` |
+| Bug   | Rule                        | Contributor     | Source file                                           |
+| ----- | --------------------------- | --------------- | ----------------------------------------------------- |
+| 1     | Datetimes                   | Shirshen        | `bugs/shirshenfix/1.md`                               |
+| 2     | Booking price               | Shirshen        | `bugs/shirshenfix/2.md`                               |
+| 9     | Booking price (test shim)   | Shirshen        | `bugs/shirshenfix/9.md`                               |
+| 3     | No double-booking           | Shirshen, Rifat | `bugs/shirshenfix/3.md`                               |
+| 4     | Booking quota               | Shirshen        | `bugs/shirshenfix/4.md`                               |
+| 5     | Rate limit                  | Shirshen        | `bugs/shirshenfix/5.md`                               |
+| 6     | Cancellation refund         | Mahir           | `bugs/mahirfix/6.md`                                  |
+| 7     | Reference codes             | Shirshen, Mahir | `bugs/shirshenfix/7.md`, `bugs/mahirfix/7.md`         |
+| 8     | Reference codes (DB resume) | Shirshen        | `bugs/shirshenfix/8.md`                               |
+| 10–12 | Auth                        | Rifat           | `bugs/rifatfix/8+15_auth_fixes.md`                    |
+| 13    | Multi-tenancy               | Rifat           | `bugs/rifatfix/9_multitendency.md`                    |
+| 14    | Booking visibility          | Shirshen        | `bugs/shirshenfix/10.md`                              |
+| 15–17 | Pagination                  | Rifat           | `bugs/rifatfix/11_pagination_fixes.md`                |
+| 18–20 | Reports & availability      | Rifat, Mahir    | `bugs/rifatfix/12_*.md`, `bugs/mahirfix/8.md`         |
+| 21    | Room stats                  | Rifat           | `bugs/rifatfix/12_reporting_and_concurrency_fixes.md` |
+| 22    | Registration                | Rifat           | `bugs/rifatfix/8+15_auth_fixes.md`                    |
+| 23    | Liveness                    | Rifat           | `bugs/rifatfix/16_liveness.md`                        |
