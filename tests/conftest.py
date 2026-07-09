@@ -7,6 +7,7 @@ through ``TestClient`` exactly the way the grader does, and assert the
 documented behaviour rather than whatever the current implementation happens
 to do. Failing tests point at real bugs.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -21,7 +22,6 @@ from sqlalchemy import text
 from app.config import JWT_ALGORITHM, JWT_SECRET
 from app.database import engine
 from app.main import app
-from app.timeutils import align_short_hour_offset_to_utc_day
 
 DEFAULT_PASSWORD = "password123"
 
@@ -77,7 +77,11 @@ class Actor:
     def relogin(self) -> "Actor":
         resp = self.client.post(
             "/auth/login",
-            json={"org_name": self.org_name, "username": self.username, "password": self.password},
+            json={
+                "org_name": self.org_name,
+                "username": self.username,
+                "password": self.password,
+            },
         )
         assert resp.status_code == 200, resp.text
         body = resp.json()
@@ -86,21 +90,27 @@ class Actor:
         return self
 
 
-def register_raw(client: TestClient, org_name: str, username: str, password: str = DEFAULT_PASSWORD):
+def register_raw(
+    client: TestClient, org_name: str, username: str, password: str = DEFAULT_PASSWORD
+):
     return client.post(
         "/auth/register",
         json={"org_name": org_name, "username": username, "password": password},
     )
 
 
-def login_raw(client: TestClient, org_name: str, username: str, password: str = DEFAULT_PASSWORD):
+def login_raw(
+    client: TestClient, org_name: str, username: str, password: str = DEFAULT_PASSWORD
+):
     return client.post(
         "/auth/login",
         json={"org_name": org_name, "username": username, "password": password},
     )
 
 
-def _make_actor(client: TestClient, org_name: str, username: str, password: str) -> Actor:
+def _make_actor(
+    client: TestClient, org_name: str, username: str, password: str
+) -> Actor:
     reg = register_raw(client, org_name, username, password)
     assert reg.status_code == 201, reg.text
     reg_body = reg.json()
@@ -134,11 +144,20 @@ def new_member(client: TestClient, org_name: str, username: str | None = None) -
     return _make_actor(client, org_name, username, DEFAULT_PASSWORD)
 
 
-def create_room(client: TestClient, admin: Actor, name: str | None = None, capacity: int = 4,
-                 hourly_rate_cents: int = 1000) -> dict:
+def create_room(
+    client: TestClient,
+    admin: Actor,
+    name: str | None = None,
+    capacity: int = 4,
+    hourly_rate_cents: int = 1000,
+) -> dict:
     resp = client.post(
         "/rooms",
-        json={"name": name or unique("room"), "capacity": capacity, "hourly_rate_cents": hourly_rate_cents},
+        json={
+            "name": name or unique("room"),
+            "capacity": capacity,
+            "hourly_rate_cents": hourly_rate_cents,
+        },
         headers=admin.headers,
     )
     assert resp.status_code == 201, resp.text
@@ -162,8 +181,10 @@ def iso_naive(dt: datetime) -> str:
 
 def future_naive(hours: float = 0, minutes: float = 0, seconds: float = 0) -> str:
     """A naive ISO datetime string representing now+offset, treated as UTC."""
-    now = datetime.now(timezone.utc).replace(microsecond=0)
-    dt = align_short_hour_offset_to_utc_day(now, hours, minutes, seconds)
+    dt = datetime.now(timezone.utc) + timedelta(
+        hours=hours, minutes=minutes, seconds=seconds
+    )
+    dt = dt.replace(microsecond=0)
     return iso_naive(dt)
 
 
@@ -181,7 +202,9 @@ def future_with_offset(hours: float, tz_hours: float) -> tuple[str, datetime]:
     Returns the string plus the equivalent instant expressed as a naive-UTC
     ``datetime`` for comparison against what the server should have stored.
     """
-    target_utc = (datetime.now(timezone.utc) + timedelta(hours=hours)).replace(microsecond=0)
+    target_utc = (datetime.now(timezone.utc) + timedelta(hours=hours)).replace(
+        microsecond=0
+    )
     tz = timezone(timedelta(hours=tz_hours))
     local = target_utc.astimezone(tz)
     return local.isoformat(), target_utc.replace(tzinfo=None)
@@ -196,7 +219,9 @@ def parse_response_dt(value: str) -> datetime:
 
 
 def assert_error(resp, status_code: int, code: str):
-    assert resp.status_code == status_code, f"expected {status_code}, got {resp.status_code}: {resp.text}"
+    assert (
+        resp.status_code == status_code
+    ), f"expected {status_code}, got {resp.status_code}: {resp.text}"
     body = resp.json()
     assert set(body.keys()) == {"detail", "code"}, f"unexpected error shape: {body}"
     assert body["code"] == code, f"expected code {code}, got {body}"
