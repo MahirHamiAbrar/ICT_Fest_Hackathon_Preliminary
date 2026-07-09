@@ -1,4 +1,4 @@
-- [ ] 1.  **Datetimes.** All API datetimes are ISO 8601. Input datetimes carrying a UTC offset must be converted to UTC before storage or comparison; naive input is treated as UTC. All response datetimes are UTC with an explicit UTC designator.
+- [s] 1. **Datetimes.** All API datetimes are ISO 8601. Input datetimes carrying a UTC offset must be converted to UTC before storage or comparison; naive input is treated as UTC. All response datetimes are UTC with an explicit UTC designator.
 
 - [ ] 2.  **Booking price.** `price_cents = hourly_rate_cents × duration_hours`. Duration must be a whole number of hours, minimum 1, maximum 8. `end_time` must be strictly after `start_time`. `start_time` must be strictly in the future at request time - no grace window.
 
@@ -17,7 +17,7 @@
 
 - [ ] 7.  **Reference codes.** Every booking's reference code is unique, including under concurrent creation.
 
- - [r] 8. **Auth.** Tokens are JWTs (HS256) with claims `sub` (user id, string), `org` (org id), `role`, `jti` (unique per token), `iat`, `exp`, `type` (access | refresh). Access tokens expire in exactly 900 seconds. Refresh tokens expire in 7 days. Logout immediately invalidates the presented access token (subsequent use → 401). Refresh tokens are single-use: refreshing returns a new access and refresh token and invalidates the presented refresh token (reuse → 401).
+- [r] 8. **Auth.** Tokens are JWTs (HS256) with claims `sub` (user id, string), `org` (org id), `role`, `jti` (unique per token), `iat`, `exp`, `type` (access | refresh). Access tokens expire in exactly 900 seconds. Refresh tokens expire in 7 days. Logout immediately invalidates the presented access token (subsequent use → 401). Refresh tokens are single-use: refreshing returns a new access and refresh token and invalidates the presented refresh token (reuse → 401).
 
 - [ ] 9.  **Multi-tenancy.** A user (including admins) may only ever read or act on data belonging to their own organization, on every code path. Cross-org resource IDs behave as non-existent (→ 404).
 
