@@ -27,6 +27,12 @@ pip install -r requirements.txt
 pytest
 ```
 
+## Run Locally (Do DOcker)
+
+```bash
+uvicorn app.main:app --host "0.0.0.0" --port 8000
+```
+
 ## Business rules
 
 1. **Datetimes.** All API datetimes are ISO 8601. Input datetimes carrying a UTC
