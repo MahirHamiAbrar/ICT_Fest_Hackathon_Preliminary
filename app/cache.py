@@ -32,3 +32,8 @@ def set_availability(room_id: int, date: str, value: dict) -> None:
 
 def invalidate_availability(room_id: int, date: str) -> None:
     _availability_cache.pop((room_id, date), None)
+
+
+def invalidate_availability_for_room(room_id: int) -> None:
+    for key in [k for k in _availability_cache if k[0] == room_id]:
+        _availability_cache.pop(key, None)

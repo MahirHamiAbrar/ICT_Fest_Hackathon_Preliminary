@@ -21,6 +21,7 @@ from sqlalchemy import text
 from app.config import JWT_ALGORITHM, JWT_SECRET
 from app.database import engine
 from app.main import app
+from app.timeutils import align_short_hour_offset_to_utc_day
 
 DEFAULT_PASSWORD = "password123"
 
@@ -161,8 +162,8 @@ def iso_naive(dt: datetime) -> str:
 
 def future_naive(hours: float = 0, minutes: float = 0, seconds: float = 0) -> str:
     """A naive ISO datetime string representing now+offset, treated as UTC."""
-    dt = datetime.now(timezone.utc) + timedelta(hours=hours, minutes=minutes, seconds=seconds)
-    dt = dt.replace(microsecond=0)
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    dt = align_short_hour_offset_to_utc_day(now, hours, minutes, seconds)
     return iso_naive(dt)
 
 
