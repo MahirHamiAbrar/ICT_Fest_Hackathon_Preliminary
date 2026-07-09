@@ -4,10 +4,12 @@
 
 Shared response serializer for `Booking` objects.
 
+Module docstring: `"Shared response serialization for bookings."`
+
 ## Imports
 
-- `from .models import Booking` - ORM type for annotation.
-- `from .timeutils import iso_utc` - datetime formatting helper.
+- `from .models import Booking` — ORM type for annotation.
+- `from .timeutils import iso_utc` — datetime formatting helper.
 
 ## Functions
 
@@ -15,7 +17,11 @@ Shared response serializer for `Booking` objects.
   - **Intent:** convert a booking ORM row to API response dict.
   - **Logic:** maps scalar fields directly and formats datetime fields using `iso_utc`.
   - **Returned keys:** `id`, `reference_code`, `room_id`, `user_id`, `start_time`, `end_time`, `status`, `price_cents`, `created_at`.
-  - **Used by:** booking router endpoints.
+  - **Associated with:**
+    - `POST /bookings` — returned as-is.
+    - `GET /bookings` — each list item.
+    - `GET /bookings/{booking_id}` — base dict; handler then overwrites `start_time` and appends `refunds`.
+    - Not used by `POST /bookings/{booking_id}/cancel` (that route returns a custom dict).
 
 ## Exports
 

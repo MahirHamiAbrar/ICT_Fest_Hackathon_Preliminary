@@ -4,6 +4,8 @@
 
 Admin-only endpoints for usage reporting and CSV export.
 
+Module docstring: `"Administrative reporting and export endpoints."`
+
 ## Imports
 
 - Datetime helpers: `datetime`, `time`, `timedelta`.
@@ -19,27 +21,30 @@ Admin-only endpoints for usage reporting and CSV export.
 ## Route Functions
 
 - `usage_report(frm: str = Query(..., alias="from"), to: str = Query(...), db=Depends(get_db), admin=Depends(require_admin))`
-  - **Route:** `GET /admin/usage-report`.
+  - **Route:** `GET /admin/usage-report` (default 200).
+  - **Dependencies:** `get_db`, `require_admin` (non-admin → `403 FORBIDDEN` from auth dependency).
   - **Logic flow:**
-    - check cache by `(admin.org_id, from, to)`,
-    - parse date range (`YYYY-MM-DD`),
-    - compute half-open datetime bounds `[range_start, range_end)`,
-    - fetch all rooms in org,
-    - for each room, query confirmed bookings starting in range,
-    - aggregate per-room count and revenue,
-    - build result and cache it.
-  - **Errors:** bad date format -> `AppError(400, "INVALID_BOOKING_WINDOW", ...)`.
-  - **Return:** `{"from", "to", "rooms": [{room_id, room_name, confirmed_bookings, revenue_cents}]}`.
+    1. `cached = cache.get_report(admin.org_id, frm, to)`; if present, return cached value.
+    2. parse `frm`/`to` as `%Y-%m-%d` dates; on `ValueError` raise `AppError(400, "INVALID_BOOKING_WINDOW", "Invalid date range")`.
+    3. `range_start = datetime.combine(from_date, time.min)`.
+    4. `range_end = datetime.combine(to_date + timedelta(days=1), time.min)` (half-open `[range_start, range_end)`).
+    5. load rooms: `Room.org_id == admin.org_id`, `order_by(Room.id.asc())`.
+    6. for each room, query bookings with `Booking.room_id == room.id`, `status == "confirmed"`, `start_time >= range_start`, `start_time < range_end`.
+    7. append `{room_id, room_name, confirmed_bookings: len(bookings), revenue_cents: sum(price_cents)}`.
+    8. build `{"from": frm, "to": to, "rooms": room_rows}`; `cache.set_report(admin.org_id, frm, to, result)`; return result.
+  - **Return:** usage report dict as above.
 
 - `export(room_id: int | None = Query(None), include_all: bool = Query(False), db=Depends(get_db), admin=Depends(require_admin))`
-  - **Route:** `GET /admin/export`.
-  - **Logic:** delegates row selection/CSV serialization to `generate_export`.
-  - **Return:** raw CSV body wrapped in `Response(media_type="text/csv")`.
+  - **Route:** `GET /admin/export` (default 200).
+  - **Dependencies:** `get_db`, `require_admin` (non-admin → `403 FORBIDDEN`).
+  - **Logic:** `csv_body = generate_export(db, admin.org_id, admin.id, room_id, include_all)`.
+  - **Return:** `Response(content=csv_body, media_type="text/csv")`.
 
 ## Associations
 
-- Uses cache for report memoization.
-- Uses `services/export.py` for CSV construction.
+- Uses `cache` for report memoization (`get_report` / `set_report`).
+- Uses `services/export.py` `generate_export` for CSV construction.
+- Auth gated by `require_admin` from `app/auth.py`.
 
 ## Exports
 
