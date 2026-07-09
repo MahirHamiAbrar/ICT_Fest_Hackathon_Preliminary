@@ -26,7 +26,7 @@ Module docstring: `"Booking creation, listing, detail and cancellation."`
 ## Router and Constants
 
 - `router = APIRouter(tags=["bookings"])` — no path prefix; routes are rooted at `/bookings…`.
-- `MIN_DURATION_HOURS = 1` — defined; not referenced by any validation in this module.
+- `MIN_DURATION_HOURS = 1` — used as lower bound in `create_booking`.
 - `MAX_DURATION_HOURS = 8` — used as upper bound in `create_booking`.
 - `QUOTA_LIMIT = 3`
 - `QUOTA_WINDOW_HOURS = 24`
@@ -80,17 +80,18 @@ Module docstring: `"Booking creation, listing, detail and cancellation."`
     1. route dependency `ratelimit.enforce_booking_create_rate_limit` runs before handler and may raise `429 RATE_LIMITED`.
     2. `start = parse_input_datetime(payload.start_time)`, `end = parse_input_datetime(payload.end_time)`.
     3. `now = datetime.utcnow()`.
-    4. if `start <= now - timedelta(seconds=300)`, raise `AppError(400, "INVALID_BOOKING_WINDOW", "start_time must be in the future")`.
-    5. `duration_hours = (end - start).total_seconds() / 3600`; if not a whole number, raise `AppError(400, "INVALID_BOOKING_WINDOW", "duration must be a whole number of hours")`.
-    6. cast to `int`; if `duration_hours > MAX_DURATION_HOURS`, raise `AppError(400, "INVALID_BOOKING_WINDOW", "duration out of range")` (no minimum-duration check against `MIN_DURATION_HOURS`).
-    7. load room with `Room.id == payload.room_id` and `Room.org_id == user.org_id`; if missing, raise `AppError(404, "ROOM_NOT_FOUND", "Room not found")`.
-    8. if `_has_conflict(...)`, raise `AppError(409, "ROOM_CONFLICT", "Room already booked for this interval")`.
-    9. `_check_quota(db, user.id, now, start)`.
-    10. `price_cents = room.hourly_rate_cents * duration_hours`.
-    11. create `Booking` with `room_id`, `user_id`, `start_time`, `end_time`, `status="confirmed"`, `reference_code=reference.next_reference_code()`, `price_cents`, `created_at=now`; add/commit/refresh.
-    12. `stats.record_create(room.id, price_cents)`.
-    13. `cache.invalidate_availability(room.id, start.date().isoformat())`.
-    14. `notifications.notify_created(booking)`.
+    4. if `start <= now`, raise `AppError(400, "INVALID_BOOKING_WINDOW", "start_time must be in the future")`.
+    5. if `end <= start`, raise `AppError(400, "INVALID_BOOKING_WINDOW", "end_time must be after start_time")`.
+    6. `duration_hours = (end - start).total_seconds() / 3600`; if not a whole number, raise `AppError(400, "INVALID_BOOKING_WINDOW", "duration must be a whole number of hours")`.
+    7. cast to `int`; if `duration_hours < MIN_DURATION_HOURS` or `duration_hours > MAX_DURATION_HOURS`, raise `AppError(400, "INVALID_BOOKING_WINDOW", "duration out of range")`.
+    8. load room with `Room.id == payload.room_id` and `Room.org_id == user.org_id`; if missing, raise `AppError(404, "ROOM_NOT_FOUND", "Room not found")`.
+    9. if `_has_conflict(...)`, raise `AppError(409, "ROOM_CONFLICT", "Room already booked for this interval")`.
+    10. `_check_quota(db, user.id, now, start)`.
+    11. `price_cents = room.hourly_rate_cents * duration_hours`.
+    12. create `Booking` with `room_id`, `user_id`, `start_time`, `end_time`, `status="confirmed"`, `reference_code=reference.next_reference_code()`, `price_cents`, `created_at=now`; add/commit/refresh.
+    13. `stats.record_create(room.id, price_cents)`.
+    14. `cache.invalidate_availability(room.id, start.date().isoformat())`.
+    15. `notifications.notify_created(booking)`.
   - **Return:** `serialize_booking(booking)`.
 
 - `list_bookings(page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=100), db=Depends(get_db), user=Depends(get_current_user))`

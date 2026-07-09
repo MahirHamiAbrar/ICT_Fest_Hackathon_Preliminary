@@ -86,9 +86,14 @@ def create_booking(
     end = parse_input_datetime(payload.end_time)
     now = datetime.utcnow()
 
-    if start <= now - timedelta(seconds=300):
+    if start <= now:
         raise AppError(
             400, "INVALID_BOOKING_WINDOW", "start_time must be in the future"
+        )
+
+    if end <= start:
+        raise AppError(
+            400, "INVALID_BOOKING_WINDOW", "end_time must be after start_time"
         )
 
     duration_hours = (end - start).total_seconds() / 3600
@@ -97,6 +102,8 @@ def create_booking(
             400, "INVALID_BOOKING_WINDOW", "duration must be a whole number of hours"
         )
     duration_hours = int(duration_hours)
+    if duration_hours < MIN_DURATION_HOURS:
+        raise AppError(400, "INVALID_BOOKING_WINDOW", "duration out of range")
     if duration_hours > MAX_DURATION_HOURS:
         raise AppError(400, "INVALID_BOOKING_WINDOW", "duration out of range")
 

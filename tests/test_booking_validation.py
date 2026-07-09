@@ -1,4 +1,5 @@
 """Rule 1 (Datetimes) and Rule 2 (Booking price / duration window)."""
+
 from datetime import datetime, timedelta, timezone
 
 from tests.conftest import (
@@ -15,6 +16,7 @@ from tests.conftest import (
 # ---------------------------------------------------------------------------
 # Rule 1: Datetimes
 # ---------------------------------------------------------------------------
+
 
 def test_naive_input_datetime_is_treated_as_utc(client):
     admin = new_admin(client)
@@ -63,22 +65,41 @@ def test_offset_input_at_zulu_matches_naive_equivalent(client):
 def test_response_datetimes_carry_explicit_utc_designator(client):
     admin = new_admin(client)
     room = create_room(client, admin)
-    resp = make_booking(client, admin, room["id"], future_naive(hours=5), future_naive(hours=6))
+    resp = make_booking(
+        client, admin, room["id"], future_naive(hours=5), future_naive(hours=6)
+    )
     assert resp.status_code == 201, resp.text
     body = resp.json()
     for field in ("start_time", "end_time", "created_at"):
         value = body[field]
-        assert value.endswith("Z") or value.endswith("+00:00"), f"{field}={value!r} lacks UTC designator"
+        assert value.endswith("Z") or value.endswith(
+            "+00:00"
+        ), f"{field}={value!r} lacks UTC designator"
+
+
+def test_zulu_input_datetime_is_treated_as_utc(client):
+    admin = new_admin(client)
+    room = create_room(client, admin)
+    start = f"{future_naive(hours=9)}Z"
+    end = f"{future_naive(hours=10)}Z"
+    resp = make_booking(client, admin, room["id"], start, end)
+    assert resp.status_code == 201, resp.text
+    body = resp.json()
+    assert body["start_time"].endswith("+00:00") or body["start_time"].endswith("Z")
+    assert body["end_time"].endswith("+00:00") or body["end_time"].endswith("Z")
 
 
 # ---------------------------------------------------------------------------
 # Rule 2: Booking price & duration window
 # ---------------------------------------------------------------------------
 
+
 def test_price_equals_hourly_rate_times_duration_hours(client):
     admin = new_admin(client)
     room = create_room(client, admin, hourly_rate_cents=1500)
-    resp = make_booking(client, admin, room["id"], future_naive(hours=5), future_naive(hours=8))
+    resp = make_booking(
+        client, admin, room["id"], future_naive(hours=5), future_naive(hours=8)
+    )
     assert resp.status_code == 201, resp.text
     assert resp.json()["price_cents"] == 1500 * 3
 
@@ -86,7 +107,9 @@ def test_price_equals_hourly_rate_times_duration_hours(client):
 def test_minimum_duration_is_one_hour(client):
     admin = new_admin(client)
     room = create_room(client, admin, hourly_rate_cents=1000)
-    resp = make_booking(client, admin, room["id"], future_naive(hours=5), future_naive(hours=6))
+    resp = make_booking(
+        client, admin, room["id"], future_naive(hours=5), future_naive(hours=6)
+    )
     assert resp.status_code == 201, resp.text
     assert resp.json()["price_cents"] == 1000
 
@@ -94,7 +117,9 @@ def test_minimum_duration_is_one_hour(client):
 def test_maximum_duration_is_eight_hours(client):
     admin = new_admin(client)
     room = create_room(client, admin, hourly_rate_cents=1000)
-    resp = make_booking(client, admin, room["id"], future_naive(hours=5), future_naive(hours=13))
+    resp = make_booking(
+        client, admin, room["id"], future_naive(hours=5), future_naive(hours=13)
+    )
     assert resp.status_code == 201, resp.text
     assert resp.json()["price_cents"] == 8000
 
@@ -102,14 +127,22 @@ def test_maximum_duration_is_eight_hours(client):
 def test_duration_over_eight_hours_is_rejected(client):
     admin = new_admin(client)
     room = create_room(client, admin)
-    resp = make_booking(client, admin, room["id"], future_naive(hours=5), future_naive(hours=14))
+    resp = make_booking(
+        client, admin, room["id"], future_naive(hours=5), future_naive(hours=14)
+    )
     assert_error(resp, 400, "INVALID_BOOKING_WINDOW")
 
 
 def test_duration_must_be_whole_number_of_hours(client):
     admin = new_admin(client)
     room = create_room(client, admin)
-    resp = make_booking(client, admin, room["id"], future_naive(hours=5), future_naive(hours=5, minutes=30))
+    resp = make_booking(
+        client,
+        admin,
+        room["id"],
+        future_naive(hours=5),
+        future_naive(hours=5, minutes=30),
+    )
     assert_error(resp, 400, "INVALID_BOOKING_WINDOW")
 
 
@@ -125,14 +158,18 @@ def test_zero_duration_is_rejected(client):
 def test_end_time_before_start_time_is_rejected(client):
     admin = new_admin(client)
     room = create_room(client, admin)
-    resp = make_booking(client, admin, room["id"], future_naive(hours=10), future_naive(hours=5))
+    resp = make_booking(
+        client, admin, room["id"], future_naive(hours=10), future_naive(hours=5)
+    )
     assert_error(resp, 400, "INVALID_BOOKING_WINDOW")
 
 
 def test_start_time_strictly_in_the_past_is_rejected(client):
     admin = new_admin(client)
     room = create_room(client, admin)
-    resp = make_booking(client, admin, room["id"], future_naive(hours=-1), future_naive(hours=1))
+    resp = make_booking(
+        client, admin, room["id"], future_naive(hours=-1), future_naive(hours=1)
+    )
     assert_error(resp, 400, "INVALID_BOOKING_WINDOW")
 
 
@@ -150,11 +187,32 @@ def test_start_time_a_few_seconds_in_the_past_is_rejected_no_grace_window(client
     room = create_room(client, admin)
     # Keep duration a clean whole hour so only the "start must be strictly
     # future" rule is under test here, not the whole-hour-duration rule.
-    resp = make_booking(client, admin, room["id"], future_naive(seconds=-30), future_naive(hours=1, seconds=-30))
+    resp = make_booking(
+        client,
+        admin,
+        room["id"],
+        future_naive(seconds=-30),
+        future_naive(hours=1, seconds=-30),
+    )
     assert_error(resp, 400, "INVALID_BOOKING_WINDOW")
+
+
+def test_start_time_a_few_seconds_in_the_future_is_allowed(client):
+    admin = new_admin(client)
+    room = create_room(client, admin)
+    resp = make_booking(
+        client,
+        admin,
+        room["id"],
+        future_naive(seconds=5),
+        future_naive(hours=1, seconds=5),
+    )
+    assert resp.status_code == 201, resp.text
 
 
 def test_room_must_exist_in_callers_org(client):
     admin = new_admin(client)
-    resp = make_booking(client, admin, 999999999, future_naive(hours=5), future_naive(hours=6))
+    resp = make_booking(
+        client, admin, 999999999, future_naive(hours=5), future_naive(hours=6)
+    )
     assert_error(resp, 404, "ROOM_NOT_FOUND")
